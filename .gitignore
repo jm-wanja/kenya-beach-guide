@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+*.db
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+dist/
+
+# ML Models (large files)
+models/*.joblib
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db

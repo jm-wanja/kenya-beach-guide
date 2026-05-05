@@ -1,0 +1,43 @@
+# =============================================================================
+# Backend Dependencies — Kenya Beach Guide
+# =============================================================================
+# Install: pip install -r requirements.txt
+# =============================================================================
+
+# --- Web Framework ---
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+pydantic==2.11.2
+pydantic-settings==2.9.1
+
+# --- Database ---
+sqlalchemy[asyncio]==2.0.41
+asyncpg==0.30.0
+aiosqlite==0.21.0
+greenlet==3.2.1
+
+# --- HTTP Client ---
+httpx==0.28.1
+
+# --- Scheduling ---
+apscheduler==3.11.0
+
+# --- ML / Data Science ---
+pandas==2.2.3
+numpy==2.2.5
+scikit-learn==1.6.1
+xgboost==3.0.0
+optuna==4.3.0
+joblib==1.4.2
+ephem==4.2
+
+# --- Testing ---
+pytest==8.3.5
+pytest-asyncio==0.26.0
+pytest-cov==6.1.1
+
+# --- Code Quality ---
+ruff==0.11.11
+
+# --- Logging ---
+python-json-logger==3.3.0

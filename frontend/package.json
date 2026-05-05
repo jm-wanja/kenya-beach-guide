@@ -1,0 +1,29 @@
+{
+  "name": "kenya-beach-guide",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Best times for beach activities along the Kenyan coast",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1",
+    "pinia": "^3.0.2",
+    "axios": "^1.9.0",
+    "echarts": "^5.6.0",
+    "vue-echarts": "^7.0.3",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.4",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.21"
+  }
+}

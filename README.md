@@ -1,6 +1,22 @@
 # Kenya Beach Guide
 
-Predicts the best times for beach activities along the Kenyan coast — surfing, kite surfing, swimming, and family/kids outings — using real-time tide data from IOC sensors and marine weather forecasts.
+**[Live Demo](https://kenya-beach-guide.vercel.app)** • **[API Docs](https://kenya-beach-guide-api.onrender.com/docs)**
+
+Predicts the best times for beach activities along the Kenyan coast: surfing, kite surfing, swimming, and family/kids outings, using real-time tide data from IOC sensors and marine weather forecasts.
+
+## Features
+
+- Real-time wave height, swell, wind, and tide data for 7 Kenyan beaches
+- Activity scores (0–100) for surfing, kite surfing, swimming, and kids outings
+- Safety alerts for rough seas, strong currents, and night swimming
+- ML-powered tide forecasting with XGBoost + anomaly detection with Isolation Forest
+- Plan Ahead tool: check conditions for any future date and activity
+
+## Screenshots
+
+![Home: all beaches](docs/screenshots/home.png)
+
+![Beach detail: activity scores and current conditions](docs/screenshots/beach-detail.png)
 
 ## Beaches Covered
 
@@ -72,46 +88,33 @@ make train           # Train forecast + anomaly models
 ```
 kenya-beach-guide/
 ├── backend/
-│   ├── main.py                      # FastAPI entry point
+│   ├── main.py              # FastAPI entry point
 │   └── src/
-│       ├── api/                     # REST endpoints
-│       │   ├── beaches.py           # Beach metadata + overview
-│       │   ├── activities.py        # Activity scores & best times
-│       │   └── tide.py              # Raw tide data & alerts
-│       ├── data/
-│       │   ├── ioc_client.py        # IOC Sea Level API client
-│       │   ├── weather_client.py    # Open-Meteo marine/wind client
-│       │   └── ingestion.py         # Data pipeline
-│       ├── features/
-│       │   └── tide_features.py     # ML feature engineering
-│       ├── models/
-│       │   ├── activity_scorer.py   # Activity scoring engine
-│       │   ├── train_forecast.py    # XGBoost training
-│       │   ├── train_anomaly.py     # Isolation Forest training
-│       │   ├── predict.py           # Inference wrapper
-│       │   └── scheduled_inference.py
-│       └── services/
-│           └── recommendation_engine.py
-├── frontend/                        # Vue 3 + Tailwind dashboard
-├── docs/                            # Documentation
-├── models/                          # Trained ML models (.joblib)
+│       ├── api/             # REST endpoints (beaches, activities, tides)
+│       ├── data/            # IOC + Open-Meteo API clients and ingestion pipeline
+│       ├── features/        # ML feature engineering
+│       ├── models/          # XGBoost training, anomaly detection, inference
+│       └── services/        # Recommendation engine
+├── frontend/                # Vue 3 + Tailwind dashboard
+├── docs/                    # Documentation and screenshots
+├── models/                  # Trained ML models (.joblib)
 ├── docker-compose.yml
 └── Makefile
 ```
 
 ## Documentation
 
-- [Setup Guide](docs/setup-guide.md) — Installation and configuration
-- [Data Flow](docs/data-flow.md) — How data moves through the system
-- [ML Models](docs/ml-models.md) — Model architecture and training
-- [API Reference](docs/api-reference.md) — REST API documentation
-- [Activity Scoring](docs/activity-scoring.md) — How activities are scored
+- [Setup Guide](docs/setup-guide.md): Installation and configuration
+- [Data Flow](docs/data-flow.md): How data moves through the system
+- [ML Models](docs/ml-models.md): Model architecture and training
+- [API Reference](docs/api-reference.md): REST API documentation
+- [Activity Scoring](docs/activity-scoring.md): How activities are scored
 
 ## Tech Stack
 
 **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0, XGBoost, scikit-learn, APScheduler
 **Frontend:** Vue 3, Vite, Pinia, Tailwind CSS, Leaflet, ECharts
-**Database:** TimescaleDB (PostgreSQL) / SQLite (dev)
+**Database:** TimescaleDB (PostgreSQL) and SQLite (dev)
 **APIs:** IOC Sea Level Monitoring, Open-Meteo Marine & Forecast
 
 ## License

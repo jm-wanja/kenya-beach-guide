@@ -35,13 +35,13 @@ CURRENT_RISK = {"kilifi", "lamu", "malindi"}
 # Approximate coastline orientation (degrees from north, facing sea)
 # Used to determine if wind is onshore or offshore
 COASTLINE_FACING = {
-    "diani": 90,       # Faces east
+    "diani": 90,  # Faces east
     "mombasa": 90,
     "shanzu": 90,
     "kilifi": 80,
     "watamu": 80,
     "malindi": 70,
-    "lamu": 60,        # Faces east-northeast
+    "lamu": 60,  # Faces east-northeast
 }
 
 
@@ -50,7 +50,7 @@ class Conditions:
     """Input conditions for scoring."""
 
     tide_level_m: Optional[float] = None
-    tide_trend: Optional[str] = None        # 'rising', 'falling', 'slack'
+    tide_trend: Optional[str] = None  # 'rising', 'falling', 'slack'
     wind_speed_kmh: Optional[float] = None
     wind_direction_deg: Optional[float] = None
     wind_gusts_kmh: Optional[float] = None
@@ -67,11 +67,11 @@ class ActivityScore:
     """Result of scoring a single activity at a point in time."""
 
     activity: str
-    score: int                  # 0–100
-    rating: str                 # "excellent", "good", "fair", "poor", "unsafe"
-    summary: str                # One-line human-readable summary
-    tips: list[str]             # Practical advice
-    warnings: list[str]         # Safety warnings
+    score: int  # 0–100
+    rating: str  # "excellent", "good", "fair", "poor", "unsafe"
+    summary: str  # One-line human-readable summary
+    tips: list[str]  # Practical advice
+    warnings: list[str]  # Safety warnings
 
 
 def score_all_activities(
@@ -150,7 +150,9 @@ def score_surfing(beach_code: str, c: Conditions) -> ActivityScore:
             tips.append(f"Small waves ({c.wave_height_m:.1f}m) — longboard recommended")
         elif 2.5 < c.wave_height_m <= 3.5:
             score += 10
-            tips.append(f"Large waves ({c.wave_height_m:.1f}m) — experienced surfers only")
+            tips.append(
+                f"Large waves ({c.wave_height_m:.1f}m) — experienced surfers only"
+            )
         elif c.wave_height_m > 3.5:
             score -= 20
             warnings.append(f"Very large waves ({c.wave_height_m:.1f}m) — dangerous")
@@ -171,7 +173,9 @@ def score_surfing(beach_code: str, c: Conditions) -> ActivityScore:
 
     # Wind
     if c.wind_speed_kmh is not None and c.wind_direction_deg is not None:
-        if c.wind_speed_kmh < 15 and _wind_is_offshore(c.wind_direction_deg, beach_code):
+        if c.wind_speed_kmh < 15 and _wind_is_offshore(
+            c.wind_direction_deg, beach_code
+        ):
             score += 15
             tips.append("Light offshore wind — clean wave faces")
         elif c.wind_speed_kmh < 10:
@@ -208,11 +212,19 @@ def score_surfing(beach_code: str, c: Conditions) -> ActivityScore:
         summary_parts.append(f"{c.wave_height_m:.1f}m waves")
     if c.wind_speed_kmh is not None:
         summary_parts.append(f"{c.wind_speed_kmh:.0f}km/h wind")
-    summary = f"Surfing: {rating} — " + ", ".join(summary_parts) if summary_parts else f"Surfing: {rating}"
+    summary = (
+        f"Surfing: {rating} — " + ", ".join(summary_parts)
+        if summary_parts
+        else f"Surfing: {rating}"
+    )
 
     return ActivityScore(
-        activity="surfing", score=score, rating=rating,
-        summary=summary, tips=tips, warnings=warnings,
+        activity="surfing",
+        score=score,
+        rating=rating,
+        summary=summary,
+        tips=tips,
+        warnings=warnings,
     )
 
 
@@ -235,7 +247,9 @@ def score_kite_surfing(beach_code: str, c: Conditions) -> ActivityScore:
         knots = _knots_from_kmh(c.wind_speed_kmh)
         if 20 <= c.wind_speed_kmh <= 35:
             score += 30
-            tips.append(f"Wind {c.wind_speed_kmh:.0f}km/h ({knots:.0f}kt) — ideal kite range")
+            tips.append(
+                f"Wind {c.wind_speed_kmh:.0f}km/h ({knots:.0f}kt) — ideal kite range"
+            )
         elif 15 <= c.wind_speed_kmh < 20:
             score += 10
             tips.append(f"Light wind ({knots:.0f}kt) — use a larger kite (12–14m)")
@@ -300,11 +314,19 @@ def score_kite_surfing(beach_code: str, c: Conditions) -> ActivityScore:
         summary_parts.append(f"{c.wind_speed_kmh:.0f}km/h wind")
     if c.wave_height_m is not None:
         summary_parts.append(f"{c.wave_height_m:.1f}m waves")
-    summary = f"Kite surfing: {rating} — " + ", ".join(summary_parts) if summary_parts else f"Kite surfing: {rating}"
+    summary = (
+        f"Kite surfing: {rating} — " + ", ".join(summary_parts)
+        if summary_parts
+        else f"Kite surfing: {rating}"
+    )
 
     return ActivityScore(
-        activity="kite_surfing", score=score, rating=rating,
-        summary=summary, tips=tips, warnings=warnings,
+        activity="kite_surfing",
+        score=score,
+        rating=rating,
+        summary=summary,
+        tips=tips,
+        warnings=warnings,
     )
 
 
@@ -339,7 +361,9 @@ def score_swimming(beach_code: str, c: Conditions) -> ActivityScore:
             tips.append("Moderate waves — swim with caution")
         else:
             score -= 25
-            warnings.append(f"Rough seas ({c.wave_height_m:.1f}m waves) — swimming not advised")
+            warnings.append(
+                f"Rough seas ({c.wave_height_m:.1f}m waves) — swimming not advised"
+            )
 
     # Wind
     if c.wind_speed_kmh is not None:
@@ -379,11 +403,19 @@ def score_swimming(beach_code: str, c: Conditions) -> ActivityScore:
         summary_parts.append(f"{c.wave_height_m:.1f}m waves")
     if c.wind_speed_kmh is not None:
         summary_parts.append(f"{c.wind_speed_kmh:.0f}km/h wind")
-    summary = f"Swimming: {rating} — " + ", ".join(summary_parts) if summary_parts else f"Swimming: {rating}"
+    summary = (
+        f"Swimming: {rating} — " + ", ".join(summary_parts)
+        if summary_parts
+        else f"Swimming: {rating}"
+    )
 
     return ActivityScore(
-        activity="swimming", score=score, rating=rating,
-        summary=summary, tips=tips, warnings=warnings,
+        activity="swimming",
+        score=score,
+        rating=rating,
+        summary=summary,
+        tips=tips,
+        warnings=warnings,
     )
 
 
@@ -490,9 +522,17 @@ def score_kids_and_dogs(beach_code: str, c: Conditions) -> ActivityScore:
         summary_parts.append(f"{c.wind_speed_kmh:.0f}km/h wind")
     if c.tide_level_m is not None:
         summary_parts.append(f"tide {c.tide_level_m:.1f}m")
-    summary = f"Kids & dogs: {rating} — " + ", ".join(summary_parts) if summary_parts else f"Kids & dogs: {rating}"
+    summary = (
+        f"Kids & dogs: {rating} — " + ", ".join(summary_parts)
+        if summary_parts
+        else f"Kids & dogs: {rating}"
+    )
 
     return ActivityScore(
-        activity="kids_and_dogs", score=score, rating=rating,
-        summary=summary, tips=tips, warnings=warnings,
+        activity="kids_and_dogs",
+        score=score,
+        rating=rating,
+        summary=summary,
+        tips=tips,
+        warnings=warnings,
     )

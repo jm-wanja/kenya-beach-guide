@@ -52,8 +52,12 @@ async def run_forecast_job() -> None:
     from sqlalchemy import select
 
     from src.database import (
-        TideObservation, Forecast, Alert, Beach,
-        WeatherObservation, ActivityRecommendation,
+        TideObservation,
+        Forecast,
+        Alert,
+        Beach,
+        WeatherObservation,
+        ActivityRecommendation,
         async_session_factory,
     )
     from src.models.predict import get_predictor
@@ -79,7 +83,9 @@ async def run_forecast_job() -> None:
                 rows = result.all()
 
             if len(rows) < 100:
-                logger.warning("Not enough data for %s (%d rows)", station_code, len(rows))
+                logger.warning(
+                    "Not enough data for %s (%d rows)", station_code, len(rows)
+                )
                 continue
 
             df = pd.DataFrame(reversed(rows), columns=["stime", "slevel"])
@@ -91,12 +97,14 @@ async def run_forecast_job() -> None:
                 now = datetime.now(timezone.utc)
                 async with async_session_factory() as session:
                     for horizon, predicted_level in forecasts.items():
-                        session.add(Forecast(
-                            station_code=station_code,
-                            forecast_time=now,
-                            predicted_level=predicted_level,
-                            created_at=now,
-                        ))
+                        session.add(
+                            Forecast(
+                                station_code=station_code,
+                                forecast_time=now,
+                                predicted_level=predicted_level,
+                                created_at=now,
+                            )
+                        )
                     await session.commit()
                 logger.info("Forecasts for %s: %s", station_code, forecasts)
 
@@ -111,19 +119,23 @@ async def run_forecast_job() -> None:
                     beach_codes = [r[0] for r in beach_result.all()]
 
                     for beach_code in beach_codes:
-                        session.add(Alert(
-                            beach_code=beach_code,
-                            severity=anomaly["severity"],
-                            message=anomaly["message"],
-                            detected_at=datetime.now(timezone.utc),
-                            slevel=anomaly["current_level"],
-                            residual=anomaly["residual"],
-                        ))
+                        session.add(
+                            Alert(
+                                beach_code=beach_code,
+                                severity=anomaly["severity"],
+                                message=anomaly["message"],
+                                detected_at=datetime.now(timezone.utc),
+                                slevel=anomaly["current_level"],
+                                residual=anomaly["residual"],
+                            )
+                        )
                     await session.commit()
                 logger.warning("ALERT for %s: %s", station_code, anomaly["message"])
 
         except Exception as exc:
-            logger.error("Forecast job failed for %s: %s", station_code, exc, exc_info=True)
+            logger.error(
+                "Forecast job failed for %s: %s", station_code, exc, exc_info=True
+            )
 
     # Generate activity recommendations for all beaches
     try:
@@ -138,8 +150,11 @@ async def _compute_activity_recommendations() -> None:
     """Compute activity scores for all beaches using latest data."""
     from sqlalchemy import select
     from src.database import (
-        Beach, TideObservation, WeatherObservation,
-        ActivityRecommendation, async_session_factory,
+        Beach,
+        TideObservation,
+        WeatherObservation,
+        ActivityRecommendation,
+        async_session_factory,
     )
     from src.models.activity_scorer import score_all_activities, Conditions
 
@@ -171,7 +186,9 @@ async def _compute_activity_recommendations() -> None:
             tide_level = tide_rows[0][0] if tide_rows else None
             tide_trend = None
             if len(tide_rows) >= 2:
-                tide_trend = "rising" if tide_rows[0][0] > tide_rows[1][0] else "falling"
+                tide_trend = (
+                    "rising" if tide_rows[0][0] > tide_rows[1][0] else "falling"
+                )
 
             now = datetime.now(timezone.utc)
             conditions = Conditions(
@@ -190,14 +207,16 @@ async def _compute_activity_recommendations() -> None:
 
             async with async_session_factory() as session:
                 for activity_name, activity_score in scores.items():
-                    session.add(ActivityRecommendation(
-                        beach_code=beach.code,
-                        activity=activity_name,
-                        time=now,
-                        score=activity_score.score,
-                        conditions=activity_score.summary,
-                        created_at=now,
-                    ))
+                    session.add(
+                        ActivityRecommendation(
+                            beach_code=beach.code,
+                            activity=activity_name,
+                            time=now,
+                            score=activity_score.score,
+                            conditions=activity_score.summary,
+                            created_at=now,
+                        )
+                    )
                 await session.commit()
 
             logger.info("Activity scores for %s computed", beach.code)
@@ -212,24 +231,33 @@ def start_scheduler() -> None:
     _scheduler = AsyncIOScheduler()
 
     _scheduler.add_job(
-        run_ingestion_job, "interval",
+        run_ingestion_job,
+        "interval",
         minutes=settings.ingest_interval_minutes,
-        id="ingest_data", name="Fetch latest IOC data",
+        id="ingest_data",
+        name="Fetch latest IOC data",
         replace_existing=True,
+        next_run_time=datetime.now(timezone.utc),
     )
 
     _scheduler.add_job(
-        run_weather_job, "interval",
+        run_weather_job,
+        "interval",
         minutes=settings.weather_interval_minutes,
-        id="fetch_weather", name="Fetch weather/marine data",
+        id="fetch_weather",
+        name="Fetch weather/marine data",
         replace_existing=True,
+        next_run_time=datetime.now(timezone.utc),
     )
 
     _scheduler.add_job(
-        run_forecast_job, "interval",
+        run_forecast_job,
+        "interval",
         minutes=settings.forecast_interval_minutes,
-        id="run_forecast", name="Generate forecasts and recommendations",
+        id="run_forecast",
+        name="Generate forecasts and recommendations",
         replace_existing=True,
+        next_run_time=datetime.now(timezone.utc),
     )
 
     _scheduler.start()

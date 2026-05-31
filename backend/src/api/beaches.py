@@ -43,7 +43,10 @@ async def list_beaches(
     beaches = result.scalars().all()
     return [
         BeachResponse(
-            code=b.code, name=b.name, lat=b.lat, lon=b.lon,
+            code=b.code,
+            name=b.name,
+            lat=b.lat,
+            lon=b.lon,
             tide_station=b.tide_station,
             tide_offset_minutes=b.tide_offset_minutes,
             description=b.description,

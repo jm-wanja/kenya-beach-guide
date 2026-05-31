@@ -17,7 +17,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import (
-    Beach, TideObservation, WeatherObservation, get_session,
+    Beach,
+    TideObservation,
+    WeatherObservation,
+    get_session,
 )
 from src.models.activity_scorer import Conditions, score_all_activities
 from src.services.recommendation_engine import get_best_times
@@ -111,8 +114,12 @@ async def get_activity_scores(
 
     return {
         name: ActivityScoreResponse(
-            activity=s.activity, score=s.score, rating=s.rating,
-            summary=s.summary, tips=s.tips, warnings=s.warnings,
+            activity=s.activity,
+            score=s.score,
+            rating=s.rating,
+            summary=s.summary,
+            tips=s.tips,
+            warnings=s.warnings,
         )
         for name, s in scores.items()
     }
@@ -130,17 +137,24 @@ async def get_best_activity_times(
         description="Activity to find best times for",
         enum=["surfing", "kite_surfing", "swimming", "kids_and_dogs"],
     ),
-    hours_ahead: int = Query(default=72, ge=1, le=168),
+    hours_ahead: int = Query(default=72, ge=1, le=192),
     top_n: int = Query(default=10, ge=1, le=50),
+    date: Optional[str] = Query(
+        default=None,
+        description="Target date in YYYY-MM-DD format. Shows best times on that day.",
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> list[BestTimeSlot]:
     """
     Find the best upcoming time slots for a specific activity.
 
+    Optionally filter by a specific date (e.g. `?date=2026-05-07`).
     Returns up to `top_n` time slots ranked by score.
     """
     await _get_beach_or_404(beach_code, session)
-    slots = await get_best_times(beach_code, activity, session, hours_ahead, top_n)
+    slots = await get_best_times(
+        beach_code, activity, session, hours_ahead, top_n, target_date=date
+    )
     return [BestTimeSlot(**slot) for slot in slots]
 
 
@@ -150,23 +164,40 @@ async def get_best_activity_times(
 )
 async def get_activity_forecast(
     beach_code: str,
-    hours_ahead: int = Query(default=48, ge=1, le=168),
+    hours_ahead: int = Query(default=48, ge=1, le=192),
+    date: Optional[str] = Query(
+        default=None,
+        description="Target date in YYYY-MM-DD format. Shows hour-by-hour forecast for that day.",
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> list[dict]:
     """
     Get an hour-by-hour breakdown of activity scores for a beach.
 
+    Optionally filter to a specific date (e.g. `?date=2026-05-07`).
     Returns all activities scored for each hour in the forecast window.
     """
     beach = await _get_beach_or_404(beach_code, session)
 
-    now = datetime.now(timezone.utc)
+    if date:
+        try:
+            target = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            raise HTTPException(
+                status_code=422, detail="Invalid date format. Use YYYY-MM-DD."
+            )
+        start_time = target
+        end_time = target + timedelta(hours=24)
+    else:
+        start_time = datetime.now(timezone.utc)
+        end_time = start_time + timedelta(hours=hours_ahead)
+
     weather_result = await session.execute(
         select(WeatherObservation)
         .where(
             WeatherObservation.beach_code == beach_code,
-            WeatherObservation.time >= now,
-            WeatherObservation.time <= now + timedelta(hours=hours_ahead),
+            WeatherObservation.time >= start_time,
+            WeatherObservation.time <= end_time,
         )
         .order_by(WeatherObservation.time.asc())
     )
@@ -195,18 +226,20 @@ async def get_activity_forecast(
         )
         scores = score_all_activities(beach_code, conditions)
 
-        forecast_data.append({
-            "time": weather.time.isoformat(),
-            "conditions": {
-                "wind_speed_kmh": weather.wind_speed_kmh,
-                "wind_direction_deg": weather.wind_direction_deg,
-                "wave_height_m": weather.wave_height_m,
-                "swell_height_m": weather.swell_height_m,
-            },
-            "activities": {
-                name: {"score": s.score, "rating": s.rating}
-                for name, s in scores.items()
-            },
-        })
+        forecast_data.append(
+            {
+                "time": weather.time.isoformat(),
+                "conditions": {
+                    "wind_speed_kmh": weather.wind_speed_kmh,
+                    "wind_direction_deg": weather.wind_direction_deg,
+                    "wave_height_m": weather.wave_height_m,
+                    "swell_height_m": weather.swell_height_m,
+                },
+                "activities": {
+                    name: {"score": s.score, "rating": s.rating}
+                    for name, s in scores.items()
+                },
+            }
+        )
 
     return forecast_data

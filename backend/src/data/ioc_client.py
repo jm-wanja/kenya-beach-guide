@@ -104,9 +104,7 @@ class IOCClient:
         current_start = start
 
         while current_start < end:
-            current_end = min(
-                current_start + timedelta(days=MAX_DAYS_PER_REQUEST), end
-            )
+            current_end = min(current_start + timedelta(days=MAX_DAYS_PER_REQUEST), end)
             try:
                 chunk = await self._fetch_chunk(
                     station_code, current_start, current_end, sensor
@@ -172,7 +170,9 @@ class IOCClient:
                 wait = 2**attempt
                 logger.warning(
                     "IOC API request failed (attempt %d/3): %s. Retrying in %ds...",
-                    attempt + 1, exc, wait,
+                    attempt + 1,
+                    exc,
+                    wait,
                 )
                 await asyncio.sleep(wait)
         else:

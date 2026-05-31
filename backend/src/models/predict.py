@@ -38,7 +38,9 @@ class TidePredictor:
         loaded_any = False
 
         for horizon in ["24h", "48h", "72h"]:
-            model_path = self.model_dir / f"{self.station_code}_forecast_{horizon}.joblib"
+            model_path = (
+                self.model_dir / f"{self.station_code}_forecast_{horizon}.joblib"
+            )
             if model_path.exists():
                 self.forecast_models[horizon] = joblib.load(model_path)
                 logger.info("Loaded forecast model: %s", model_path.name)
@@ -67,7 +69,9 @@ class TidePredictor:
 
         predictions = {}
         for horizon, model in self.forecast_models.items():
-            model_features = last_row.reindex(columns=model.feature_names_in_, fill_value=0)
+            model_features = last_row.reindex(
+                columns=model.feature_names_in_, fill_value=0
+            )
             pred = model.predict(model_features)[0]
             predictions[horizon] = float(pred)
 
@@ -77,8 +81,10 @@ class TidePredictor:
         """Check for anomalous sea levels."""
         if df.empty:
             return {
-                "is_anomaly": False, "severity": None,
-                "residual": 0.0, "current_level": 0.0,
+                "is_anomaly": False,
+                "severity": None,
+                "residual": 0.0,
+                "current_level": 0.0,
                 "message": "No data available",
             }
 

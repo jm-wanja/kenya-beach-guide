@@ -109,9 +109,9 @@ kenya-beach-guide/
 
 ## Tech Stack
 
-**Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0, XGBoost, scikit-learn, APScheduler  
-**Frontend:** Vue 3, Vite, Pinia, Tailwind CSS, Leaflet, ECharts  
-**Database:** TimescaleDB (PostgreSQL) / SQLite (dev)  
+**Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0, XGBoost, scikit-learn, APScheduler
+**Frontend:** Vue 3, Vite, Pinia, Tailwind CSS, Leaflet, ECharts
+**Database:** TimescaleDB (PostgreSQL) / SQLite (dev)
 **APIs:** IOC Sea Level Monitoring, Open-Meteo Marine & Forecast
 
 ## License

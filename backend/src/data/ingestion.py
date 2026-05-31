@@ -49,7 +49,9 @@ async def ingest_latest(station_code: str) -> int:
         logger.info("No data for %s. Fetching last 7 days.", station_code)
     else:
         start = latest_time + timedelta(minutes=1)
-        logger.info("Last observation for %s: %s", station_code, latest_time.isoformat())
+        logger.info(
+            "Last observation for %s: %s", station_code, latest_time.isoformat()
+        )
 
     end = datetime.now(timezone.utc)
     if start >= end:
@@ -114,7 +116,10 @@ async def _fetch_and_store_tide(
 
         logger.info(
             "Inserted %d records for %s/%s (skipped %d dupes).",
-            len(new_obs), station_code, sensor, len(observations) - len(new_obs),
+            len(new_obs),
+            station_code,
+            sensor,
+            len(observations) - len(new_obs),
         )
 
     return len(new_obs)
@@ -132,7 +137,7 @@ async def ingest_weather() -> dict[str, int]:
         for beach in beaches:
             try:
                 data = await client.fetch_combined_forecast(
-                    beach.lat, beach.lon, forecast_days=3
+                    beach.lat, beach.lon, forecast_days=8
                 )
                 count = await _store_weather(beach.code, data)
                 results[beach.code] = count
@@ -214,7 +219,9 @@ async def _main():
     parser.add_argument("--latest", action="store_true")
     parser.add_argument("--weather", action="store_true", help="Fetch weather data")
     parser.add_argument(
-        "--station", type=str, default=None,
+        "--station",
+        type=str,
+        default=None,
         choices=list(STATION_METADATA.keys()),
     )
     args = parser.parse_args()

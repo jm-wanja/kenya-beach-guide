@@ -43,9 +43,13 @@ ANOMALY_PARAMS = {
 ROLLING_BASELINE_WINDOW = 480
 
 
-def compute_residuals(df: pd.DataFrame, window: int = ROLLING_BASELINE_WINDOW) -> pd.Series:
+def compute_residuals(
+    df: pd.DataFrame, window: int = ROLLING_BASELINE_WINDOW
+) -> pd.Series:
     """Compute deviation from rolling average."""
-    rolling_mean = df["slevel"].rolling(window=window, center=True, min_periods=1).mean()
+    rolling_mean = (
+        df["slevel"].rolling(window=window, center=True, min_periods=1).mean()
+    )
     return df["slevel"] - rolling_mean
 
 
@@ -62,7 +66,9 @@ def classify_severity(residual: float, station_code: str = "momb") -> str | None
     return None
 
 
-def train_isolation_forest(df: pd.DataFrame, params: dict | None = None) -> IsolationForest:
+def train_isolation_forest(
+    df: pd.DataFrame, params: dict | None = None
+) -> IsolationForest:
     """Train Isolation Forest anomaly detector."""
     if params is None:
         params = ANOMALY_PARAMS.copy()
@@ -72,12 +78,20 @@ def train_isolation_forest(df: pd.DataFrame, params: dict | None = None) -> Isol
     model.fit(X)
     predictions = model.predict(X)
     n_anomalies = (predictions == -1).sum()
-    logger.info("Detected %d anomalies in %d samples (%.1f%%)", n_anomalies, len(X), 100 * n_anomalies / len(X))
+    logger.info(
+        "Detected %d anomalies in %d samples (%.1f%%)",
+        n_anomalies,
+        len(X),
+        100 * n_anomalies / len(X),
+    )
     return model
 
 
 def save_anomaly_model(
-    model: IsolationForest, station_code: str, feature_names: list[str], n_samples: int,
+    model: IsolationForest,
+    station_code: str,
+    feature_names: list[str],
+    n_samples: int,
 ) -> Path:
     """Save anomaly model and metadata."""
     model_dir = Path(settings.model_dir)
@@ -110,7 +124,9 @@ async def train_anomaly_model(station_code: str = "momb") -> dict:
     features_df = create_features(df)
     feature_names = get_feature_columns(features_df)
     model = train_isolation_forest(features_df)
-    model_path = save_anomaly_model(model, station_code, feature_names, len(features_df))
+    model_path = save_anomaly_model(
+        model, station_code, feature_names, len(features_df)
+    )
     return {"model_path": str(model_path), "n_training_samples": len(features_df)}
 
 
@@ -125,7 +141,9 @@ async def train_all_anomaly_models() -> dict[str, dict]:
 
 async def _main():
     parser = argparse.ArgumentParser(description="Train anomaly detection models.")
-    parser.add_argument("--station", type=str, default=None, choices=list(STATION_METADATA.keys()))
+    parser.add_argument(
+        "--station", type=str, default=None, choices=list(STATION_METADATA.keys())
+    )
     args = parser.parse_args()
     await init_db()
 
@@ -135,9 +153,14 @@ async def _main():
     else:
         results = await train_all_anomaly_models()
         for station, result in results.items():
-            print(f"{station}: {result['model_path']} ({result['n_training_samples']} samples)")
+            print(
+                f"{station}: {result['model_path']} ({result['n_training_samples']} samples)"
+            )
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    )
     asyncio.run(_main())

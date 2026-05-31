@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import axios from 'axios'
+import { defineStore } from 'pinia';
+import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api/v1' })
+const api = axios.create({ baseURL: '/api/v1' });
 
 export const useBeachStore = defineStore('beach', {
   state: () => ({
@@ -17,46 +17,50 @@ export const useBeachStore = defineStore('beach', {
 
   actions: {
     async fetchBeaches() {
-      this.loading = true
+      this.loading = true;
       try {
-        const { data } = await api.get('/beaches')
-        this.beaches = data
+        const { data } = await api.get('/beaches');
+        this.beaches = data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     async fetchBeachDetail(code) {
-      this.loading = true
+      this.loading = true;
       try {
-        const { data } = await api.get(`/beaches/${code}`)
-        this.currentBeach = data
+        const { data } = await api.get(`/beaches/${code}`);
+        this.currentBeach = data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     async fetchActivityScores(code) {
       try {
-        const { data } = await api.get(`/activities/${code}`)
-        this.activityScores = data
+        const { data } = await api.get(`/activities/${code}`);
+        this.activityScores = data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
       }
     },
 
-    async fetchBestTimes(code, activity) {
+    async fetchBestTimes(code, activity, date = null) {
       try {
+        const params = { activity, top_n: 10 };
+        if (date) params.date = date;
         const { data } = await api.get(`/activities/${code}/best-times`, {
-          params: { activity, top_n: 5 },
-        })
-        this.bestTimes[activity] = data
+          params,
+        });
+        this.bestTimes[activity] = data;
+        return data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
+        return [];
       }
     },
 
@@ -64,21 +68,21 @@ export const useBeachStore = defineStore('beach', {
       try {
         const { data } = await api.get(`/activities/${code}/forecast`, {
           params: { hours_ahead: hoursAhead },
-        })
-        this.activityForecast = data
+        });
+        this.activityForecast = data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
       }
     },
 
     async fetchAlerts(beachCode = null) {
       try {
-        const params = beachCode ? { beach_code: beachCode } : {}
-        const { data } = await api.get('/alerts', { params })
-        this.alerts = data
+        const params = beachCode ? { beach_code: beachCode } : {};
+        const { data } = await api.get('/alerts', { params });
+        this.alerts = data;
       } catch (err) {
-        this.error = err.message
+        this.error = err.message;
       }
     },
   },
-})
+});

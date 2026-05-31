@@ -64,14 +64,16 @@ class WeatherClient:
         params = {
             "latitude": lat,
             "longitude": lon,
-            "hourly": ",".join([
-                "wave_height",
-                "wave_direction",
-                "wave_period",
-                "swell_wave_height",
-                "swell_wave_period",
-                "ocean_current_velocity",
-            ]),
+            "hourly": ",".join(
+                [
+                    "wave_height",
+                    "wave_direction",
+                    "wave_period",
+                    "swell_wave_height",
+                    "swell_wave_period",
+                    "ocean_current_velocity",
+                ]
+            ),
             "forecast_days": forecast_days,
             "timezone": "Africa/Nairobi",
         }
@@ -97,14 +99,16 @@ class WeatherClient:
         params = {
             "latitude": lat,
             "longitude": lon,
-            "hourly": ",".join([
-                "wind_speed_10m",
-                "wind_direction_10m",
-                "wind_gusts_10m",
-                "temperature_2m",
-                "precipitation",
-                "cloud_cover",
-            ]),
+            "hourly": ",".join(
+                [
+                    "wind_speed_10m",
+                    "wind_direction_10m",
+                    "wind_gusts_10m",
+                    "temperature_2m",
+                    "precipitation",
+                    "cloud_cover",
+                ]
+            ),
             "forecast_days": forecast_days,
             "timezone": "Africa/Nairobi",
         }
@@ -171,9 +175,9 @@ class WeatherClient:
                 )[i]
             elif source == "wind":
                 record["wind_speed_kmh"] = hourly.get("wind_speed_10m", [None])[i]
-                record["wind_direction_deg"] = hourly.get(
-                    "wind_direction_10m", [None]
-                )[i]
+                record["wind_direction_deg"] = hourly.get("wind_direction_10m", [None])[
+                    i
+                ]
                 record["wind_gusts_kmh"] = hourly.get("wind_gusts_10m", [None])[i]
                 record["air_temperature_c"] = hourly.get("temperature_2m", [None])[i]
                 record["precipitation_mm"] = hourly.get("precipitation", [None])[i]

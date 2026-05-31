@@ -28,29 +28,38 @@ async def get_best_times(
     session: AsyncSession,
     hours_ahead: int = 72,
     top_n: int = 10,
+    target_date: Optional[str] = None,
 ) -> list[dict]:
     """
     Find the best times for an activity at a beach.
 
     Evaluates weather forecasts hour by hour and returns the
-    top-scoring time slots.
+    top-scoring time slots. If target_date is provided (YYYY-MM-DD),
+    only that day is considered.
     """
     # Get beach info
-    result = await session.execute(
-        select(Beach).where(Beach.code == beach_code)
-    )
+    result = await session.execute(select(Beach).where(Beach.code == beach_code))
     beach = result.scalar()
     if not beach:
         return []
 
+    # Determine time window
+    if target_date:
+        start_time = datetime.strptime(target_date, "%Y-%m-%d").replace(
+            tzinfo=timezone.utc
+        )
+        end_time = start_time + timedelta(hours=24)
+    else:
+        start_time = datetime.now(timezone.utc)
+        end_time = start_time + timedelta(hours=hours_ahead)
+
     # Get weather forecast data
-    now = datetime.now(timezone.utc)
     weather_result = await session.execute(
         select(WeatherObservation)
         .where(
             WeatherObservation.beach_code == beach_code,
-            WeatherObservation.time >= now,
-            WeatherObservation.time <= now + timedelta(hours=hours_ahead),
+            WeatherObservation.time >= start_time,
+            WeatherObservation.time <= end_time,
         )
         .order_by(WeatherObservation.time.asc())
     )
@@ -87,19 +96,21 @@ async def get_best_times(
         scores = score_all_activities(beach_code, conditions)
         if activity in scores:
             s = scores[activity]
-            scored_slots.append({
-                "time": weather.time.isoformat(),
-                "score": s.score,
-                "rating": s.rating,
-                "summary": s.summary,
-                "tips": s.tips,
-                "warnings": s.warnings,
-                "conditions": {
-                    "wind_speed_kmh": weather.wind_speed_kmh,
-                    "wave_height_m": weather.wave_height_m,
-                    "wind_direction_deg": weather.wind_direction_deg,
-                },
-            })
+            scored_slots.append(
+                {
+                    "time": weather.time.isoformat(),
+                    "score": s.score,
+                    "rating": s.rating,
+                    "summary": s.summary,
+                    "tips": s.tips,
+                    "warnings": s.warnings,
+                    "conditions": {
+                        "wind_speed_kmh": weather.wind_speed_kmh,
+                        "wave_height_m": weather.wave_height_m,
+                        "wind_direction_deg": weather.wind_direction_deg,
+                    },
+                }
+            )
 
     # Sort by score descending, take top N
     scored_slots.sort(key=lambda x: x["score"], reverse=True)
@@ -107,15 +118,14 @@ async def get_best_times(
 
 
 async def get_beach_overview(
-    beach_code: str, session: AsyncSession,
+    beach_code: str,
+    session: AsyncSession,
 ) -> Optional[dict]:
     """
     Get a complete overview of current conditions and recommendations
     for a beach.
     """
-    result = await session.execute(
-        select(Beach).where(Beach.code == beach_code)
-    )
+    result = await session.execute(select(Beach).where(Beach.code == beach_code))
     beach = result.scalar()
     if not beach:
         return None
@@ -133,16 +143,35 @@ async def get_beach_overview(
     if len(tide_rows) >= 2:
         tide_trend = "rising" if tide_rows[0][0] > tide_rows[1][0] else "falling"
 
-    # Latest weather
+    # Weather closest to now (within ±1 hour window, pick nearest in Python)
+    now = datetime.now(timezone.utc)
     weather_result = await session.execute(
         select(WeatherObservation)
-        .where(WeatherObservation.beach_code == beach_code)
-        .order_by(WeatherObservation.time.desc())
-        .limit(1)
+        .where(
+            WeatherObservation.beach_code == beach_code,
+            WeatherObservation.time >= now - timedelta(hours=1),
+            WeatherObservation.time <= now + timedelta(hours=1),
+        )
+        .order_by(WeatherObservation.time.asc())
     )
-    weather = weather_result.scalar()
-
-    now = datetime.now(timezone.utc)
+    weather_candidates = weather_result.scalars().all()
+    weather = None
+    if weather_candidates:
+        weather = min(
+            weather_candidates,
+            key=lambda w: abs(
+                (w.time.replace(tzinfo=timezone.utc) - now).total_seconds()
+            ),
+        )
+    else:
+        # Fallback: most recent available
+        fallback = await session.execute(
+            select(WeatherObservation)
+            .where(WeatherObservation.beach_code == beach_code)
+            .order_by(WeatherObservation.time.desc())
+            .limit(1)
+        )
+        weather = fallback.scalar()
     conditions = Conditions(
         tide_level_m=tide_level,
         tide_trend=tide_trend,
@@ -168,10 +197,12 @@ async def get_beach_overview(
         "current_conditions": {
             "tide_level_m": tide_level,
             "tide_trend": tide_trend,
+            "tide_time": tide_rows[0][1].isoformat() if tide_rows else None,
             "wind_speed_kmh": weather.wind_speed_kmh if weather else None,
             "wind_direction_deg": weather.wind_direction_deg if weather else None,
             "wave_height_m": weather.wave_height_m if weather else None,
             "swell_height_m": weather.swell_height_m if weather else None,
+            "weather_time": weather.time.isoformat() if weather else None,
         },
         "activities": {
             name: {

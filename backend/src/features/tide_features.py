@@ -46,7 +46,8 @@ def create_features(
 
     logger.info(
         "Created %d features. Dropped %d NaN rows.",
-        len(result.columns) - 2, dropped,
+        len(result.columns) - 2,
+        dropped,
     )
     return result
 
@@ -86,7 +87,8 @@ def add_lunar_phase(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_lag_features(
-    df: pd.DataFrame, column: str = "slevel",
+    df: pd.DataFrame,
+    column: str = "slevel",
     periods: Optional[list[int]] = None,
 ) -> pd.DataFrame:
     """Add lagged sea level values as features."""
@@ -99,7 +101,8 @@ def add_lag_features(
 
 
 def add_rolling_features(
-    df: pd.DataFrame, column: str = "slevel",
+    df: pd.DataFrame,
+    column: str = "slevel",
     windows: Optional[list[int]] = None,
 ) -> pd.DataFrame:
     """Add rolling window statistics."""

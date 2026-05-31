@@ -64,9 +64,7 @@ async def load_training_data(station_code: str) -> pd.DataFrame:
         rows = result.all()
 
     if not rows:
-        raise ValueError(
-            f"No data for '{station_code}'. Run `make ingest` first."
-        )
+        raise ValueError(f"No data for '{station_code}'. Run `make ingest` first.")
 
     df = pd.DataFrame(rows, columns=["stime", "slevel"])
     logger.info("Loaded %d observations for %s/%s", len(df), station_code, sensor)
@@ -81,7 +79,9 @@ async def load_training_data(station_code: str) -> pd.DataFrame:
 
 
 def prepare_dataset(
-    df: pd.DataFrame, horizon: int, test_fraction: float = 0.2,
+    df: pd.DataFrame,
+    horizon: int,
+    test_fraction: float = 0.2,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, list[str]]:
     """Create features and split into train/test (time-based)."""
     features_df = create_features(df)
@@ -94,8 +94,10 @@ def prepare_dataset(
     test_df = features_df.iloc[split_idx:]
 
     return (
-        train_df[feature_cols], test_df[feature_cols],
-        train_df["target"], test_df["target"],
+        train_df[feature_cols],
+        test_df[feature_cols],
+        train_df["target"],
+        test_df["target"],
         feature_cols,
     )
 
@@ -113,7 +115,9 @@ def train_xgboost(
 
 
 def evaluate_model(
-    model: xgb.XGBRegressor, X_test: pd.DataFrame, y_test: pd.Series,
+    model: xgb.XGBRegressor,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
 ) -> dict[str, float]:
     """Evaluate model on test set."""
     y_pred = model.predict(X_test)
@@ -122,13 +126,18 @@ def evaluate_model(
         "mae": float(mean_absolute_error(y_test, y_pred)),
         "r2": float(r2_score(y_test, y_pred)),
     }
-    logger.info("RMSE=%.4f MAE=%.4f R²=%.4f", metrics["rmse"], metrics["mae"], metrics["r2"])
+    logger.info(
+        "RMSE=%.4f MAE=%.4f R²=%.4f", metrics["rmse"], metrics["mae"], metrics["r2"]
+    )
     return metrics
 
 
 def save_model(
-    model: xgb.XGBRegressor, station_code: str, horizon_name: str,
-    metrics: dict, feature_names: list[str],
+    model: xgb.XGBRegressor,
+    station_code: str,
+    horizon_name: str,
+    metrics: dict,
+    feature_names: list[str],
 ) -> Path:
     """Save model and metadata to disk."""
     model_dir = Path(settings.model_dir)
@@ -160,7 +169,9 @@ async def train_model(station_code: str = "momb", horizon_name: str = "24h") -> 
     horizons = FORECAST_HORIZONS.get(station_code, FORECAST_HORIZONS["momb"])
     horizon = horizons[horizon_name]
 
-    logger.info("Training for %s/%s (%d obs ahead)", station_code, horizon_name, horizon)
+    logger.info(
+        "Training for %s/%s (%d obs ahead)", station_code, horizon_name, horizon
+    )
     df = await load_training_data(station_code)
     X_train, X_test, y_train, y_test, feature_names = prepare_dataset(df, horizon)
     model = train_xgboost(X_train, y_train)
@@ -174,7 +185,9 @@ async def train_all_models() -> dict[str, dict]:
     results = {}
     for station_code in STATION_METADATA:
         results[station_code] = {}
-        for horizon_name in FORECAST_HORIZONS.get(station_code, FORECAST_HORIZONS["momb"]):
+        for horizon_name in FORECAST_HORIZONS.get(
+            station_code, FORECAST_HORIZONS["momb"]
+        ):
             result = await train_model(station_code, horizon_name)
             results[station_code][horizon_name] = result
     return results
@@ -182,8 +195,12 @@ async def train_all_models() -> dict[str, dict]:
 
 async def _main():
     parser = argparse.ArgumentParser(description="Train tide forecast models.")
-    parser.add_argument("--station", type=str, default=None, choices=list(STATION_METADATA.keys()))
-    parser.add_argument("--horizon", type=str, default=None, choices=["24h", "48h", "72h"])
+    parser.add_argument(
+        "--station", type=str, default=None, choices=list(STATION_METADATA.keys())
+    )
+    parser.add_argument(
+        "--horizon", type=str, default=None, choices=["24h", "48h", "72h"]
+    )
     args = parser.parse_args()
     await init_db()
 
@@ -203,5 +220,8 @@ async def _main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    )
     asyncio.run(_main())

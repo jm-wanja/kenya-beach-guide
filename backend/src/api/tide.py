@@ -91,8 +91,10 @@ async def get_current_tide(
     latest_obs = None
     if latest:
         latest_obs = ObservationResponse(
-            stime=latest.stime, slevel=latest.slevel,
-            station_code=latest.station_code, sensor=latest.sensor,
+            stime=latest.stime,
+            slevel=latest.slevel,
+            station_code=latest.station_code,
+            sensor=latest.sensor,
         )
 
     cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
@@ -127,10 +129,20 @@ async def get_current_tide(
             forecast_dict = predictor.forecast(df)
             anomaly = predictor.detect_anomaly(df)
         else:
-            anomaly = {"is_anomaly": False, "severity": None, "residual": 0, "message": "Insufficient data"}
+            anomaly = {
+                "is_anomaly": False,
+                "severity": None,
+                "residual": 0,
+                "message": "Insufficient data",
+            }
     except Exception as exc:
         logger.warning("Forecast failed for %s: %s", station_code, exc)
-        anomaly = {"is_anomaly": False, "severity": None, "residual": 0, "message": str(exc)}
+        anomaly = {
+            "is_anomaly": False,
+            "severity": None,
+            "residual": 0,
+            "message": str(exc),
+        }
 
     return CurrentTideResponse(
         station_code=station_code,
@@ -171,8 +183,10 @@ async def get_tide_history(
 
     return [
         ObservationResponse(
-            stime=obs.stime, slevel=obs.slevel,
-            station_code=obs.station_code, sensor=obs.sensor,
+            stime=obs.stime,
+            slevel=obs.slevel,
+            station_code=obs.station_code,
+            sensor=obs.sensor,
         )
         for obs in result.scalars().all()
     ]
@@ -239,9 +253,13 @@ async def get_alerts(
 
     return [
         AlertResponse(
-            id=a.id, beach_code=a.beach_code, severity=a.severity,
-            message=a.message, detected_at=a.detected_at,
-            slevel=a.slevel, residual=a.residual,
+            id=a.id,
+            beach_code=a.beach_code,
+            severity=a.severity,
+            message=a.message,
+            detected_at=a.detected_at,
+            slevel=a.slevel,
+            residual=a.residual,
         )
         for a in result.scalars().all()
     ]

@@ -1,8 +1,19 @@
 <template>
   <div v-if="beach">
-    <router-link to="/" class="text-ocean-600 hover:text-ocean-800 mb-4 inline-block">
-      ← Back to all beaches
-    </router-link>
+    <!-- Beach switcher -->
+    <div class="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+      <router-link
+        v-for="b in beaches"
+        :key="b.code"
+        :to="{ name: 'beach', params: { code: b.code } }"
+        class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+        :class="b.code === props.code
+          ? 'bg-ocean-600 text-white'
+          : 'bg-white text-ocean-700 border border-ocean-200 hover:bg-ocean-50'"
+      >
+        {{ b.name }}
+      </router-link>
+    </div>
 
     <h1 class="text-3xl font-bold text-ocean-800 mb-2">{{ beach.beach.name }}</h1>
     <p class="text-ocean-600 mb-6">{{ beach.beach.description }}</p>
@@ -129,22 +140,29 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useBeachStore } from '../stores/beach'
 import ActivityCard from '../components/ActivityCard.vue'
 
 const props = defineProps({ code: String })
 const store = useBeachStore()
 const beach = computed(() => store.currentBeach)
+const beaches = computed(() => store.beaches)
 
 const conditionsTime = computed(() => {
   if (!beach.value?.current_conditions) return null
   const ts = beach.value.current_conditions.weather_time || beach.value.current_conditions.tide_time
   if (!ts) return null
   const d = new Date(ts)
-  const date = d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })
+  const diffMs = Date.now() - d.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return 'Updated just now'
+  if (diffMin < 60) return `Updated ${diffMin} minute${diffMin === 1 ? '' : 's'} ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `Updated ${diffHr} hour${diffHr === 1 ? '' : 's'} ago`
+  const date = d.toLocaleDateString([], { day: 'numeric', month: 'short' })
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  return `${date}, ${time}`
+  return `Updated ${date}, ${time}`
 })
 
 // Future forecast state
@@ -191,5 +209,13 @@ function scoreColor(score) {
 
 onMounted(() => {
   store.fetchBeachDetail(props.code)
+  if (!beaches.value.length) store.fetchBeaches()
+})
+
+watch(() => props.code, (newCode) => {
+  store.fetchBeachDetail(newCode)
+  futureBestTimes.value = []
+  futureSearched.value = false
+  selectedDate.value = ''
 })
 </script>

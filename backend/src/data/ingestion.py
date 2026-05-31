@@ -48,7 +48,7 @@ async def ingest_latest(station_code: str) -> int:
         start = datetime.now(timezone.utc) - timedelta(days=7)
         logger.info("No data for %s. Fetching last 7 days.", station_code)
     else:
-        start = latest_time + timedelta(minutes=1)
+        start = latest_time.replace(tzinfo=timezone.utc) + timedelta(minutes=1)
         logger.info(
             "Last observation for %s: %s", station_code, latest_time.isoformat()
         )
